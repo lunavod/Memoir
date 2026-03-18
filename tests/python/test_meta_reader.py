@@ -1,6 +1,6 @@
 import os
 import pytest
-from memoir import (
+from memoir_capture import (
     CaptureEngine, MonitorTarget,
     MetaReader, MetaWriter, MetaKeyEntry, MetaRow,
 )

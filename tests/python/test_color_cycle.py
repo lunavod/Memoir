@@ -8,7 +8,7 @@ import pytest
 
 cv2 = pytest.importorskip("cv2", reason="opencv-python not installed")
 
-from memoir import CaptureEngine, WindowTitleTarget
+from memoir_capture import CaptureEngine, WindowTitleTarget
 
 WINDOW_NAME = "Memoir Color Test 48291"
 WINDOW_W, WINDOW_H = 640, 480

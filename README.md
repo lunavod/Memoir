@@ -43,7 +43,7 @@ pip install build numpy
 python -m build --wheel
 
 # Install
-pip install dist\memoir-*.whl
+pip install dist\memoir_capture-*.whl
 ```
 
 The first build takes ~15 minutes (vcpkg builds FFmpeg). Subsequent builds use cached binaries.
@@ -52,7 +52,7 @@ For local development without installing:
 
 ```powershell
 .\scripts\build.ps1
-# memoir/ package is ready to import from the project root
+# memoir_capture/ package is ready to import from the project root
 ```
 
 ## Quick Start
@@ -60,10 +60,10 @@ For local development without installing:
 ### Capture frames
 
 ```python
-import memoir
+import memoir_capture
 
-engine = memoir.CaptureEngine(
-    memoir.MonitorTarget(0),    # primary monitor
+engine = memoir_capture.CaptureEngine(
+    memoir_capture.MonitorTarget(0),    # primary monitor
     max_fps=10.0,
 )
 engine.start()
@@ -81,8 +81,8 @@ engine.stop()
 ### Capture a specific window
 
 ```python
-engine = memoir.CaptureEngine(
-    memoir.WindowTitleTarget(r"(?i)notepad"),
+engine = memoir_capture.CaptureEngine(
+    memoir_capture.WindowTitleTarget(r"(?i)notepad"),
     max_fps=30.0,
 )
 ```
@@ -90,8 +90,8 @@ engine = memoir.CaptureEngine(
 ### Record to MP4
 
 ```python
-engine = memoir.CaptureEngine(
-    memoir.MonitorTarget(0),
+engine = memoir_capture.CaptureEngine(
+    memoir_capture.MonitorTarget(0),
     max_fps=10.0,
     record_width=1920,
     record_height=1080,
@@ -114,7 +114,7 @@ engine.stop()
 ### Read metadata
 
 ```python
-meta = memoir.MetaReader.read("session_001.meta")
+meta = memoir_capture.MetaReader.read("session_001.meta")
 
 print(f"Keys tracked: {[k.name for k in meta.keys]}")
 
@@ -125,7 +125,7 @@ for row in meta.rows:
 ### Write metadata (for synthetic replays)
 
 ```python
-from memoir import MetaWriter, MetaKeyEntry, MetaRow
+from memoir_capture import MetaWriter, MetaKeyEntry, MetaRow
 
 keys = [MetaKeyEntry(0, 0x57, "W"), MetaKeyEntry(1, 0x41, "A")]
 
@@ -141,7 +141,7 @@ with MetaWriter("synthetic.meta", keys) as w:
 ### Context manager
 
 ```python
-with memoir.CaptureEngine(memoir.MonitorTarget(0)) as engine:
+with memoir_capture.CaptureEngine(memoir_capture.MonitorTarget(0)) as engine:
     packet = engine.get_next_frame(timeout_ms=2000)
     if packet:
         with packet:

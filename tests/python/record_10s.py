@@ -1,5 +1,5 @@
 import os, time
-from memoir import CaptureEngine, MonitorTarget
+from memoir_capture import CaptureEngine, MonitorTarget
 
 output_dir = os.path.join(os.path.dirname(__file__), "..", "..", "recordings")
 os.makedirs(output_dir, exist_ok=True)

@@ -38,17 +38,17 @@ endif()
 
 # Install: _native.pyd + FFmpeg DLLs into the memoir/ package
 # (used by scikit-build-core for wheel packaging)
-install(TARGETS _native LIBRARY DESTINATION memoir)
+install(TARGETS _native LIBRARY DESTINATION memoir_capture)
 
 file(GLOB _FFMPEG_DLLS "${VCPKG_INSTALLED_DIR}/${VCPKG_TARGET_TRIPLET}/bin/av*.dll"
                        "${VCPKG_INSTALLED_DIR}/${VCPKG_TARGET_TRIPLET}/bin/sw*.dll")
-install(FILES ${_FFMPEG_DLLS} DESTINATION memoir)
+install(FILES ${_FFMPEG_DLLS} DESTINATION memoir_capture)
 
-# Post-build: also copy to source tree for local dev (import memoir works)
+# Post-build: also copy to source tree for local dev (import memoir_capture works)
 add_custom_command(TARGET _native POST_BUILD
     COMMAND ${CMAKE_COMMAND} -E copy_if_different
         $<TARGET_FILE:_native>
-        ${CMAKE_SOURCE_DIR}/memoir/_native.pyd
+        ${CMAKE_SOURCE_DIR}/memoir_capture/_native.pyd
     COMMENT "Copying _native.pyd into memoir/"
 )
 

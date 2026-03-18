@@ -21,7 +21,7 @@ cmake.args = [
     "-DVCPKG_OVERLAY_TRIPLETS=cmake/triplets",
     "-DVCPKG_TARGET_TRIPLET=x64-windows-release",
 ]
-wheel.packages = ["memoir"]
+wheel.packages = ["memoir_capture"]
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]

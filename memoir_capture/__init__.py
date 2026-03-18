@@ -12,8 +12,8 @@ if sys.platform == "win32" and hasattr(os, "add_dll_directory"):
     if os.path.isdir(_root):
         os.add_dll_directory(_root)
 
-from memoir._native import __version__, ping, FramePacket  # noqa: E402
-from memoir._types import (  # noqa: E402
+from memoir_capture._native import __version__, ping, FramePacket  # noqa: E402
+from memoir_capture._types import (  # noqa: E402
     CaptureTarget,
     EngineStats,
     MetaFile,
@@ -25,8 +25,8 @@ from memoir._types import (  # noqa: E402
     WindowExeTarget,
     WindowTitleTarget,
 )
-from memoir._engine import CaptureEngine  # noqa: E402
-from memoir._meta import MetaReader, MetaWriter  # noqa: E402
+from memoir_capture._engine import CaptureEngine  # noqa: E402
+from memoir_capture._meta import MetaReader, MetaWriter  # noqa: E402
 
 __all__ = [
     # version

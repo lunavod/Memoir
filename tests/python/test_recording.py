@@ -1,6 +1,6 @@
 import os
 import pytest
-from memoir import CaptureEngine, MonitorTarget
+from memoir_capture import CaptureEngine, MonitorTarget
 
 pytestmark = pytest.mark.capture
 

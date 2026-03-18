@@ -7,7 +7,7 @@ import struct
 import time
 from typing import TYPE_CHECKING
 
-from memoir._types import MetaFile, MetaHeader, MetaKeyEntry, MetaRow
+from memoir_capture._types import MetaFile, MetaHeader, MetaKeyEntry, MetaRow
 
 if TYPE_CHECKING:
     from typing import BinaryIO

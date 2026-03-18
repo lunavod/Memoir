@@ -5,8 +5,8 @@ from __future__ import annotations
 import os
 from typing import Iterator
 
-from memoir import _native
-from memoir._types import (
+from memoir_capture import _native
+from memoir_capture._types import (
     CaptureTarget,
     EngineStats,
     MonitorTarget,
