@@ -1,0 +1,62 @@
+name: Build & Test
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+jobs:
+  build:
+    runs-on: windows-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        python-version: ["3.12", "3.13"]
+
+    steps:
+      - uses: actions/checkout@v4
+
+      # --- Python ---
+      - uses: actions/setup-python@v5
+        with:
+          python-version: ${{ matrix.python-version }}
+
+      # --- vcpkg (cached) ---
+      - name: Bootstrap vcpkg
+        run: |
+          git clone https://github.com/microsoft/vcpkg.git vcpkg --depth 1
+          .\vcpkg\bootstrap-vcpkg.bat -disableMetrics
+
+      - name: Cache vcpkg binary archives
+        uses: actions/cache@v4
+        with:
+          path: ~\AppData\Local\vcpkg\archives
+          key: vcpkg-${{ runner.os }}-${{ hashFiles('vcpkg.json') }}
+          restore-keys: vcpkg-${{ runner.os }}-
+
+      # --- Build wheel ---
+      - name: Install build tools
+        run: pip install build numpy
+
+      - name: Build wheel
+        run: python -m build --wheel
+
+      # --- Test ---
+      - name: Install wheel
+        run: pip install (Get-ChildItem dist\*.whl).FullName
+
+      - name: Run tests
+        run: |
+          python tests/python/test_import.py
+          python tests/python/test_capture.py
+          python tests/python/test_recording.py
+          python tests/python/test_meta_reader.py
+          python tests/python/test_lifecycle.py
+
+      # --- Upload artifact ---
+      - name: Upload wheel
+        uses: actions/upload-artifact@v4
+        with:
+          name: wheel-${{ matrix.python-version }}
+          path: dist/*.whl
