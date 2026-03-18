@@ -16,11 +16,12 @@ build-backend = "scikit_build_core.build"
 
 [tool.scikit-build]
 cmake.build-type = "Release"
-cmake.args = ["-DCMAKE_TOOLCHAIN_FILE=vcpkg/scripts/buildsystems/vcpkg.cmake"]
+cmake.args = [
+    "-DCMAKE_TOOLCHAIN_FILE=vcpkg/scripts/buildsystems/vcpkg.cmake",
+    "-DVCPKG_OVERLAY_TRIPLETS=cmake/triplets",
+    "-DVCPKG_TARGET_TRIPLET=x64-windows-release",
+]
 wheel.packages = ["memoir"]
-
-[tool.scikit-build.cmake.define]
-CMAKE_TOOLCHAIN_FILE = "vcpkg/scripts/buildsystems/vcpkg.cmake"
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]
