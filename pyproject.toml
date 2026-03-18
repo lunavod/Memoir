@@ -1,0 +1,23 @@
+[project]
+name = "memoir"
+version = "0.1.0"
+description = "Windows-native capture/replay module with Python bindings"
+readme = "spec.md"
+license = "MIT"
+requires-python = ">=3.10"
+dependencies = ["numpy"]
+
+[project.urls]
+Repository = "https://github.com/lunavod/Memoir"
+
+[build-system]
+requires = ["scikit-build-core>=0.10", "pybind11>=3.0"]
+build-backend = "scikit_build_core.build"
+
+[tool.scikit-build]
+cmake.build-type = "Release"
+cmake.args = ["-DCMAKE_TOOLCHAIN_FILE=vcpkg/scripts/buildsystems/vcpkg.cmake"]
+wheel.packages = ["memoir"]
+
+[tool.scikit-build.cmake.define]
+CMAKE_TOOLCHAIN_FILE = "vcpkg/scripts/buildsystems/vcpkg.cmake"
