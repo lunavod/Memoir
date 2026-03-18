@@ -2,8 +2,8 @@ import memoir_capture
 
 
 def test_ping():
-    assert memoir_capture.ping() == "memoir-capture 0.1.2 loaded OK"
+    assert memoir_capture.ping() == "memoir-capture 0.1.3 loaded OK"
 
 
 def test_version():
-    assert memoir_capture.__version__ == "0.1.2"
+    assert memoir_capture.__version__ == "0.1.3"
