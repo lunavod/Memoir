@@ -36,7 +36,15 @@ if(MSVC)
     target_compile_options(_native PRIVATE /bigobj)
 endif()
 
-# Post-build: copy _native.pyd into the memoir/ package directory
+# Install: _native.pyd + FFmpeg DLLs into the memoir/ package
+# (used by scikit-build-core for wheel packaging)
+install(TARGETS _native LIBRARY DESTINATION memoir)
+
+file(GLOB _FFMPEG_DLLS "${VCPKG_INSTALLED_DIR}/${VCPKG_TARGET_TRIPLET}/bin/av*.dll"
+                       "${VCPKG_INSTALLED_DIR}/${VCPKG_TARGET_TRIPLET}/bin/sw*.dll")
+install(FILES ${_FFMPEG_DLLS} DESTINATION memoir)
+
+# Post-build: also copy to source tree for local dev (import memoir works)
 add_custom_command(TARGET _native POST_BUILD
     COMMAND ${CMAKE_COMMAND} -E copy_if_different
         $<TARGET_FILE:_native>
@@ -44,9 +52,6 @@ add_custom_command(TARGET _native POST_BUILD
     COMMENT "Copying _native.pyd into memoir/"
 )
 
-# Post-build: copy FFmpeg DLLs to project root (next to memoir/)
-file(GLOB _FFMPEG_DLLS "${VCPKG_INSTALLED_DIR}/${VCPKG_TARGET_TRIPLET}/bin/av*.dll"
-                       "${VCPKG_INSTALLED_DIR}/${VCPKG_TARGET_TRIPLET}/bin/sw*.dll")
 foreach(_dll ${_FFMPEG_DLLS})
     add_custom_command(TARGET _native POST_BUILD
         COMMAND ${CMAKE_COMMAND} -E copy_if_different
