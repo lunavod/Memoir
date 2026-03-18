@@ -13,6 +13,7 @@ dist/
 
 # Runtime artifacts
 *.dll
+*.pyd
 recordings/
 
 # IDE

@@ -15,7 +15,7 @@ struct FrameIterator {
     CaptureEngine* engine;
 };
 
-PYBIND11_MODULE(Memoir, m) {
+PYBIND11_MODULE(_native, m) {
     m.doc() = "Memoir \xe2\x80\x93 capture/replay module";
     m.attr("__version__") = MEMOIR_VERSION_STRING;
 
