@@ -3,6 +3,17 @@
 
 namespace memoir {
 
+// Strip (?i) prefix and return icase flag if present.
+static std::wregex MakeRegex(const std::wstring& pattern) {
+    auto flags = std::regex_constants::ECMAScript;
+    std::wstring pat = pattern;
+    if (pat.size() >= 4 && pat.substr(0, 4) == L"(?i)") {
+        flags |= std::regex_constants::icase;
+        pat = pat.substr(4);
+    }
+    return std::wregex(pat, flags);
+}
+
 // --- Window by title ---
 
 struct TitleEnumData {
@@ -27,7 +38,7 @@ static BOOL CALLBACK TitleEnumProc(HWND hwnd, LPARAM lParam) {
 
 HWND FindWindowByTitleRegex(const std::wstring& pattern) {
     TitleEnumData d;
-    d.pattern = std::wregex(pattern);
+    d.pattern = MakeRegex(pattern);
     EnumWindows(TitleEnumProc, reinterpret_cast<LPARAM>(&d));
     return d.result;
 }
@@ -70,7 +81,7 @@ static BOOL CALLBACK ExeEnumProc(HWND hwnd, LPARAM lParam) {
 
 HWND FindWindowByExeRegex(const std::wstring& pattern) {
     ExeEnumData d;
-    d.pattern = std::wregex(pattern);
+    d.pattern = MakeRegex(pattern);
     EnumWindows(ExeEnumProc, reinterpret_cast<LPARAM>(&d));
     return d.result;
 }

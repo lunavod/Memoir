@@ -30,6 +30,28 @@ engine = CaptureEngine(WindowTitleTarget(r"(?i)overwatch"))
 engine = CaptureEngine(WindowExeTarget(r"(?i)chrome\.exe"))
 ```
 
+### Regex syntax notes
+
+Window title and exe patterns use **C++ ECMAScript regex**, not Python `re`. Most common patterns work the same, but there are differences:
+
+| Feature | Syntax | Supported? |
+|---------|--------|------------|
+| Case-insensitive | `(?i)` prefix | Yes (stripped and converted to icase flag) |
+| Character classes | `[a-z]`, `\d`, `\w`, `\s` | Yes |
+| Quantifiers | `+`, `*`, `?`, `{n,m}` | Yes |
+| Alternation | `foo\|bar` | Yes |
+| Non-capturing group | `(?:...)` | Yes |
+| Lookahead | `(?=...)`, `(?!...)` | Yes |
+| Lookbehind | `(?<=...)`, `(?<!...)` | **No** |
+| Named groups | `(?P<name>...)` | **No** (use `(?:...)` instead) |
+| Other inline flags | `(?s)`, `(?m)`, `(?x)` | **No** |
+| Unicode categories | `\p{L}` | **No** |
+
+For simple matching (which covers 99% of window targeting), the syntax is identical to Python. If you need advanced features, find the window handle separately and pass a `WindowTitleTarget` with a simple pattern.
+
+## Engine Parameters
+```
+
 ## Engine Parameters
 
 ```python
