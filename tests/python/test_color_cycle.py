@@ -3,9 +3,10 @@ cycle through colors, verify both live and in the MP4."""
 
 import time
 
-import cv2
 import numpy as np
 import pytest
+
+cv2 = pytest.importorskip("cv2", reason="opencv-python not installed")
 
 from memoir import CaptureEngine, WindowTitleTarget
 
