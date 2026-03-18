@@ -2,7 +2,8 @@ name: Build & Release
 
 on:
   push:
-    tags: ["v*"]
+    branches: [main]   # build + test (warms vcpkg cache for tag runs)
+    tags: ["v*"]       # build + test + release + publish
 
 permissions:
   contents: write      # for creating GitHub Releases
@@ -60,8 +61,9 @@ jobs:
           name: wheel-${{ matrix.python-version }}
           path: dist/*.whl
 
-  # ── Create GitHub Release with changelog ──────────────────────────
+  # ── Create GitHub Release with changelog (tags only) ──────────────
   release:
+    if: startsWith(github.ref, 'refs/tags/')
     needs: build
     runs-on: ubuntu-latest
 
@@ -101,8 +103,9 @@ jobs:
           body_path: changelog.md
           files: wheels/*.whl
 
-  # ── Publish to PyPI via trusted publisher ─────────────────────────
+  # ── Publish to PyPI via trusted publisher (tags only) ─────────────
   publish:
+    if: startsWith(github.ref, 'refs/tags/')
     needs: build
     runs-on: ubuntu-latest
     environment: pypi
