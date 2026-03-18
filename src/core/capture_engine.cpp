@@ -325,7 +325,8 @@ CaptureEngine::CaptureEngine(const EngineConfig& cfg)
 }
 
 CaptureEngine::~CaptureEngine() {
-    if (impl_->state.load() == EngineState::Running) {
+    auto st = impl_->state.load();
+    if (st == EngineState::Running || st == EngineState::Faulted) {
         try { Stop(); } catch (...) {}
     }
     // NOTE: We intentionally do NOT call CoUninitialize here.
