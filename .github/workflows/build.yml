@@ -4,6 +4,7 @@ on:
   push:
     branches: [main]   # build + test (warms vcpkg cache for tag runs)
     tags: ["v*"]       # build + test + release + publish
+  workflow_dispatch:
 
 permissions:
   contents: write      # for creating GitHub Releases
@@ -27,13 +28,26 @@ jobs:
         with:
           python-version: ${{ matrix.python-version }}
 
-      # --- vcpkg (cached) ---
-      - name: Cache vcpkg binary archives
-        uses: actions/cache@v5
-        with:
-          path: ~\AppData\Local\vcpkg\archives
-          key: vcpkg-${{ runner.os }}-${{ hashFiles('vcpkg.json', 'cmake/triplets/*') }}
-          restore-keys: vcpkg-${{ runner.os }}-
+      # --- vcpkg (cached via Cloudflare R2) ---
+      - name: Restore vcpkg binary cache from R2
+        env:
+          AWS_ACCESS_KEY_ID: ${{ secrets.R2_ACCESS_KEY_ID }}
+          AWS_SECRET_ACCESS_KEY: ${{ secrets.R2_SECRET_ACCESS_KEY }}
+          AWS_DEFAULT_REGION: auto
+        run: |
+          $endpoint = "https://${{ secrets.R2_ACCOUNT_ID }}.r2.cloudflarestorage.com"
+          $key = "vcpkg-cache-${{ runner.os }}.tar"
+          $localArchive = "$env:RUNNER_TEMP\vcpkg-cache.tar"
+          $cacheDir = "$env:LOCALAPPDATA\vcpkg\archives"
+
+          aws s3 cp "s3://github-actions-cache/$key" $localArchive --endpoint-url $endpoint 2>$null
+          if ($LASTEXITCODE -eq 0) {
+            New-Item -ItemType Directory -Force -Path $cacheDir | Out-Null
+            tar -xf $localArchive -C $cacheDir
+            Write-Host "Restored vcpkg cache from R2"
+          } else {
+            Write-Host "No existing cache in R2 — will build from scratch"
+          }
 
       - name: Bootstrap vcpkg
         run: |
@@ -53,6 +67,25 @@ jobs:
 
       - name: Run tests (headless)
         run: pytest --headless -v
+
+      # --- Save vcpkg cache to R2 ---
+      - name: Upload vcpkg binary cache to R2
+        if: always()
+        env:
+          AWS_ACCESS_KEY_ID: ${{ secrets.R2_ACCESS_KEY_ID }}
+          AWS_SECRET_ACCESS_KEY: ${{ secrets.R2_SECRET_ACCESS_KEY }}
+          AWS_DEFAULT_REGION: auto
+        run: |
+          $endpoint = "https://${{ secrets.R2_ACCOUNT_ID }}.r2.cloudflarestorage.com"
+          $key = "vcpkg-cache-${{ runner.os }}.tar"
+          $localArchive = "$env:RUNNER_TEMP\vcpkg-cache.tar"
+          $cacheDir = "$env:LOCALAPPDATA\vcpkg\archives"
+
+          if (Test-Path $cacheDir) {
+            tar -cf $localArchive -C $cacheDir .
+            aws s3 cp $localArchive "s3://github-actions-cache/$key" --endpoint-url $endpoint
+            Write-Host "Uploaded vcpkg cache to R2"
+          }
 
       # --- Upload artifact ---
       - name: Upload wheel

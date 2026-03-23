@@ -1,0 +1,39 @@
+name: Seed R2 cache from GitHub Actions cache
+
+on:
+  workflow_dispatch:
+
+jobs:
+  seed:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v6
+
+      - name: Restore GitHub Actions cache
+        uses: actions/cache/restore@v5
+        with:
+          path: ~\AppData\Local\vcpkg\archives
+          key: vcpkg-${{ runner.os }}-${{ hashFiles('vcpkg.json', 'cmake/triplets/*') }}
+          restore-keys: vcpkg-${{ runner.os }}-
+
+      - name: Upload to R2
+        env:
+          AWS_ACCESS_KEY_ID: ${{ secrets.R2_ACCESS_KEY_ID }}
+          AWS_SECRET_ACCESS_KEY: ${{ secrets.R2_SECRET_ACCESS_KEY }}
+          AWS_DEFAULT_REGION: auto
+        run: |
+          $endpoint = "https://${{ secrets.R2_ACCOUNT_ID }}.r2.cloudflarestorage.com"
+          $cacheDir = "$env:LOCALAPPDATA\vcpkg\archives"
+
+          if (!(Test-Path $cacheDir)) {
+            Write-Host "::error::Cache directory not found — GitHub Actions cache miss"
+            exit 1
+          }
+
+          $size = (Get-ChildItem -Recurse $cacheDir | Measure-Object -Property Length -Sum).Sum / 1MB
+          Write-Host "Cache size: $([math]::Round($size, 1)) MB"
+
+          $archive = "$env:RUNNER_TEMP\vcpkg-cache.tar"
+          tar -cf $archive -C $cacheDir .
+          aws s3 cp $archive "s3://github-actions-cache/vcpkg-cache-${{ runner.os }}.tar" --endpoint-url $endpoint
+          Write-Host "Uploaded to R2"
