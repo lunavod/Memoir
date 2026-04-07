@@ -162,6 +162,25 @@ jobs:
       - name: Run meta tests (headless)
         run: npx vitest run tests/node/meta.test.ts
 
+      # --- Save vcpkg cache to R2 ---
+      - name: Upload vcpkg binary cache to R2
+        if: always()
+        env:
+          AWS_ACCESS_KEY_ID: ${{ secrets.R2_ACCESS_KEY_ID }}
+          AWS_SECRET_ACCESS_KEY: ${{ secrets.R2_SECRET_ACCESS_KEY }}
+          AWS_DEFAULT_REGION: auto
+        run: |
+          $endpoint = "https://${{ secrets.R2_ACCOUNT_ID }}.r2.cloudflarestorage.com"
+          $key = "vcpkg-cache-${{ runner.os }}.tar"
+          $localArchive = "$env:RUNNER_TEMP\vcpkg-cache.tar"
+          $cacheDir = "$env:LOCALAPPDATA\vcpkg\archives"
+
+          if (Test-Path $cacheDir) {
+            tar -cf $localArchive -C $cacheDir .
+            aws s3 cp $localArchive "s3://github-actions-cache/$key" --endpoint-url $endpoint
+            Write-Host "Uploaded vcpkg cache to R2"
+          }
+
       # --- Upload artifacts ---
       - name: Upload Node.js package artifacts
         uses: actions/upload-artifact@v6
