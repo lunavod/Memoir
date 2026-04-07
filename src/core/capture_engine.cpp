@@ -493,7 +493,8 @@ std::optional<std::string> CaptureEngine::GetLastError() const {
     return impl_->lastError;
 }
 
-RecordingInfo CaptureEngine::StartRecording(const std::string& base_path) {
+RecordingInfo CaptureEngine::StartRecording(const std::string& base_path,
+                                             const std::string& encoder) {
     if (impl_->state.load() != EngineState::Running)
         throw std::runtime_error("Engine not running");
 
@@ -507,6 +508,7 @@ RecordingInfo CaptureEngine::StartRecording(const std::string& base_path) {
     rc.record_height = impl_->config.record_height;
     rc.gop           = impl_->config.record_gop;
     rc.fps           = impl_->config.max_fps;
+    rc.encoder       = encoder;
     rc.key_map       = impl_->config.key_map;
 
     impl_->recordingSession = std::make_unique<RecordingSession>(rc);
@@ -515,7 +517,8 @@ RecordingInfo CaptureEngine::StartRecording(const std::string& base_path) {
 
 RecordingInfo CaptureEngine::StartRecording(const std::string& base_path,
                                              const std::string& video_path,
-                                             const std::string& meta_path) {
+                                             const std::string& meta_path,
+                                             const std::string& encoder) {
     if (impl_->state.load() != EngineState::Running)
         throw std::runtime_error("Engine not running");
 
@@ -531,6 +534,7 @@ RecordingInfo CaptureEngine::StartRecording(const std::string& base_path,
     rc.record_height = impl_->config.record_height;
     rc.gop           = impl_->config.record_gop;
     rc.fps           = impl_->config.max_fps;
+    rc.encoder       = encoder;
     rc.key_map       = impl_->config.key_map;
 
     impl_->recordingSession = std::make_unique<RecordingSession>(rc);

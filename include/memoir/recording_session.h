@@ -35,6 +35,7 @@ public:
         uint32_t record_height = 1080;
         uint32_t gop = 1;
         double fps = 10.0;
+        std::string encoder;  // empty = auto (try nvenc → amf → mf → libx265)
         std::vector<KeySpec> key_map;
     };
 

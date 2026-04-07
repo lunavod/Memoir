@@ -87,6 +87,48 @@ struct RecordingSession::Impl {
     }
 
     // -----------------------------------------------------------------------
+    // Apply encoder-specific options and attempt to open the codec.
+    // Returns true on success, false if this encoder can't be used.
+    bool TryOpenEncoder(const AVCodec* codec, const char* name) {
+        encCtx = avcodec_alloc_context3(codec);
+        if (!encCtx) return false;
+
+        encCtx->width       = static_cast<int>(config.record_width);
+        encCtx->height      = static_cast<int>(config.record_height);
+        encCtx->pix_fmt     = AV_PIX_FMT_YUV444P;
+        encCtx->color_range = AVCOL_RANGE_JPEG;
+        encCtx->time_base   = AVRational{1, static_cast<int>(config.fps)};
+        encCtx->gop_size    = static_cast<int>(config.gop);
+        encCtx->max_b_frames = 0;
+
+        if (std::strcmp(name, "hevc_nvenc") == 0) {
+            av_opt_set(encCtx->priv_data, "preset", "p7", 0);
+            av_opt_set(encCtx->priv_data, "tune",   "ll", 0);
+            av_opt_set(encCtx->priv_data, "rc",     "constqp", 0);
+            av_opt_set_int(encCtx->priv_data, "qp",  0, 0);
+            av_opt_set(encCtx->priv_data, "profile", "rext", 0);
+        } else if (std::strcmp(name, "hevc_amf") == 0) {
+            av_opt_set(encCtx->priv_data, "usage",   "lowlatency", 0);
+            av_opt_set(encCtx->priv_data, "quality", "quality", 0);
+            av_opt_set(encCtx->priv_data, "rc",      "cqp", 0);
+            av_opt_set_int(encCtx->priv_data, "qp_i", 0, 0);
+            av_opt_set_int(encCtx->priv_data, "qp_p", 0, 0);
+        } else if (std::strcmp(name, "libx265") == 0) {
+            av_opt_set(encCtx->priv_data, "preset", "ultrafast", 0);
+            av_opt_set(encCtx->priv_data, "x265-params",
+                       "lossless=1:log-level=warning", 0);
+        }
+
+        int ret = avcodec_open2(encCtx, codec, nullptr);
+        if (ret < 0) {
+            avcodec_free_context(&encCtx);
+            encCtx = nullptr;
+            return false;
+        }
+        return true;
+    }
+
+    // -----------------------------------------------------------------------
     void Init() {
         info.base_path  = config.base_path;
         info.video_path = config.video_path.empty()
@@ -95,46 +137,48 @@ struct RecordingSession::Impl {
         info.meta_path  = config.meta_path.empty()
                             ? config.base_path + ".meta"
                             : config.meta_path;
-        info.codec      = "hevc";
         info.width      = config.record_width;
         info.height     = config.record_height;
 
-        // --- Encoder ---
-        const AVCodec* codec =
-            avcodec_find_encoder_by_name("hevc_nvenc");
-        if (!codec)
-            throw std::runtime_error(
-                "hevc_nvenc not available — ensure an NVIDIA GPU with "
-                "NVENC support is present");
+        // --- Encoder (try hardware first, fall back to software) ---
+        static constexpr const char* encoder_names[] = {
+            "hevc_nvenc", "hevc_amf", "libx265"
+        };
 
-        encCtx = avcodec_alloc_context3(codec);
-        if (!encCtx)
-            throw std::runtime_error("Failed to alloc encoder context");
+        const AVCodec* codec = nullptr;
+        const char* selected_name = nullptr;
 
-        encCtx->width       = static_cast<int>(config.record_width);
-        encCtx->height      = static_cast<int>(config.record_height);
-        encCtx->pix_fmt     = AV_PIX_FMT_YUV444P; // full chroma, no subsampling
-        encCtx->color_range = AVCOL_RANGE_JPEG;    // full range 0-255
-        encCtx->time_base   = AVRational{1, static_cast<int>(config.fps)};
-        encCtx->gop_size    = static_cast<int>(config.gop);
-        encCtx->max_b_frames = 0;
-
-        av_opt_set(encCtx->priv_data, "preset", "p7", 0);
-        av_opt_set(encCtx->priv_data, "tune",   "ll", 0);
-        av_opt_set(encCtx->priv_data, "rc",     "constqp", 0);
-        av_opt_set_int(encCtx->priv_data, "qp",  0, 0);     // lossless QP
-        av_opt_set(encCtx->priv_data, "profile", "rext", 0); // 4:4:4 support
-
-        int ret = avcodec_open2(encCtx, codec, nullptr);
-        if (ret < 0) {
-            char buf[256]{};
-            av_strerror(ret, buf, sizeof(buf));
-            throw std::runtime_error(
-                std::string("Failed to open hevc_nvenc: ") + buf);
+        if (!config.encoder.empty()) {
+            // Forced encoder
+            codec = avcodec_find_encoder_by_name(config.encoder.c_str());
+            if (!codec)
+                throw std::runtime_error(
+                    "Encoder not found: " + config.encoder);
+            if (!TryOpenEncoder(codec, config.encoder.c_str()))
+                throw std::runtime_error(
+                    "Failed to open encoder: " + config.encoder);
+            selected_name = config.encoder.c_str();
+        } else {
+            // Auto: try each in priority order
+            for (const char* name : encoder_names) {
+                codec = avcodec_find_encoder_by_name(name);
+                if (!codec) continue;
+                if (TryOpenEncoder(codec, name)) {
+                    selected_name = name;
+                    break;
+                }
+            }
         }
 
+        if (!selected_name)
+            throw std::runtime_error(
+                "No HEVC encoder available — install a GPU driver with "
+                "hardware encoding support, or build FFmpeg with libx265");
+
+        info.codec = selected_name;
+
         // --- Muxer ---
-        ret = avformat_alloc_output_context2(
+        int ret = avformat_alloc_output_context2(
             &fmtCtx, nullptr, "mp4", info.video_path.c_str());
         if (ret < 0 || !fmtCtx)
             throw std::runtime_error("Failed to create MP4 context");

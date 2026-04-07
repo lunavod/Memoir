@@ -170,10 +170,11 @@ PYBIND11_MODULE(_native, m) {
              [](CaptureEngine& self) { return FrameIterator{&self}; })
         // recording
         .def("start_recording",
-             [](CaptureEngine& self, const std::string& base_path) {
+             [](CaptureEngine& self, const std::string& base_path,
+                const std::string& encoder) {
                  RecordingInfo info;
                  { py::gil_scoped_release rel;
-                   info = self.StartRecording(base_path); }
+                   info = self.StartRecording(base_path, encoder); }
                  py::dict d;
                  d["base_path"]  = info.base_path;
                  d["video_path"] = info.video_path;
@@ -183,16 +184,18 @@ PYBIND11_MODULE(_native, m) {
                  d["height"]     = info.height;
                  return d;
              },
-             py::arg("base_path"))
+             py::arg("base_path"),
+             py::arg("encoder") = "")
         .def("start_recording_split",
              [](CaptureEngine& self,
                 const std::string& base_path,
                 const std::string& video_path,
-                const std::string& meta_path) {
+                const std::string& meta_path,
+                const std::string& encoder) {
                  RecordingInfo info;
                  { py::gil_scoped_release rel;
                    info = self.StartRecording(base_path, video_path,
-                                              meta_path); }
+                                              meta_path, encoder); }
                  py::dict d;
                  d["base_path"]  = info.base_path;
                  d["video_path"] = info.video_path;
@@ -204,7 +207,8 @@ PYBIND11_MODULE(_native, m) {
              },
              py::arg("base_path"),
              py::arg("video_path"),
-             py::arg("meta_path"))
+             py::arg("meta_path"),
+             py::arg("encoder") = "")
         .def("stop_recording", [](CaptureEngine& self) {
             py::gil_scoped_release rel;
             self.StopRecording();

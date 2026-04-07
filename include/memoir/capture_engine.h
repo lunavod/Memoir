@@ -24,10 +24,12 @@ public:
     std::shared_ptr<FramePacket> GetNextFrame(int timeout_ms = -1);
 
     // Recording
-    RecordingInfo StartRecording(const std::string& base_path);
+    RecordingInfo StartRecording(const std::string& base_path,
+                                 const std::string& encoder = "");
     RecordingInfo StartRecording(const std::string& base_path,
                                  const std::string& video_path,
-                                 const std::string& meta_path);
+                                 const std::string& meta_path,
+                                 const std::string& encoder = "");
     void StopRecording();
     bool IsRecording() const;
 

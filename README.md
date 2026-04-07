@@ -8,7 +8,7 @@ Memoir captures frames from a window or monitor using Windows Graphics Capture (
 
 - **WGC capture** — continuous frame capture from any window or monitor
 - **NumPy delivery** — BGRA frames as `(H, W, 4)` uint8 arrays via bounded queue
-- **NVENC recording** — GPU-accelerated HEVC encoding via FFmpeg, lossless YUV444 by default
+- **Hardware-accelerated recording** — lossless HEVC encoding (YUV 4:4:4) via NVENC, AMF, or software x265 fallback
 - **Binary metadata** — `.meta` sidecar with per-frame keyboard state, timestamps, and frame IDs
 - **Dynamic recording** — start/stop recording without restarting capture
 - **Frame-accurate keyboard** — key state snapshot at the exact moment each frame is accepted
@@ -17,8 +17,8 @@ Memoir captures frames from a window or monitor using Windows Graphics Capture (
 ## Requirements
 
 - Windows 10 1903+ (for WGC `CreateFreeThreaded`)
-- NVIDIA GPU with NVENC support
 - Python 3.10+
+- NVIDIA GPU (NVENC), AMD GPU (AMF), or CPU-only (x265 software fallback) for recording
 - Visual Studio 2022 (for building from source)
 
 ## Installation
@@ -162,7 +162,7 @@ with memoir_capture.CaptureEngine(memoir_capture.MonitorTarget(0)) as engine:
 | `record_height` | `1080` | Recording output height |
 | `record_gop` | `1` | GOP size (1 = all-intra, higher = smaller files) |
 
-**Methods**: `start()`, `stop()`, `get_next_frame(timeout_ms)`, `frames()`, `start_recording(base_path)`, `stop_recording()`, `is_recording()`, `stats()`
+**Methods**: `start()`, `stop()`, `get_next_frame(timeout_ms)`, `frames()`, `start_recording(base_path, *, encoder=None)`, `stop_recording()`, `is_recording()`, `stats()`
 
 ### `FramePacket`
 
@@ -176,9 +176,13 @@ with memoir_capture.CaptureEngine(memoir_capture.MonitorTarget(0)) as engine:
 
 Supports `with packet:` (auto-release) and explicit `packet.release()`.
 
-### Recording Quality
+### Recording
 
-Default encoding: lossless HEVC (QP=0), YUV 4:4:4, full color range.
+Encoding: lossless HEVC (QP=0), YUV 4:4:4, full color range. The encoder is selected automatically in priority order: `hevc_nvenc` (NVIDIA) → `hevc_amf` (AMD) → `libx265` (software). You can force a specific encoder:
+
+```python
+info = engine.start_recording("session_001", encoder="libx265")
+```
 
 | Setting | File size (10s, 1080p) |
 |---------|----------------------|
@@ -196,7 +200,7 @@ WGC FrameArrived (thread pool)
   │
   ├─ Accept: assign frame_id, snapshot keyboard
   ├─ GPU→CPU: CopyResource → staging → Map → memcpy
-  ├─ Recording: swscale (BGRA→YUV444) → hevc_nvenc → MP4
+  ├─ Recording: swscale (BGRA→YUV444) → HEVC encoder → MP4
   └─ Enqueue → Python consumer
 ```
 
@@ -208,7 +212,7 @@ WGC FrameArrived (thread pool)
 ## Testing
 
 ```powershell
-# Full suite (requires display + NVIDIA GPU)
+# Full suite (requires display + supported GPU or x265)
 pytest -v
 
 # Headless (CI-safe)

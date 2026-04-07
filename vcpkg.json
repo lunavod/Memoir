@@ -6,7 +6,7 @@
     "cppwinrt",
     {
       "name": "ffmpeg",
-      "features": ["avcodec", "avformat", "swscale", "nvcodec"]
+      "features": ["avcodec", "avformat", "swscale", "nvcodec", "x265"]
     }
   ]
 }

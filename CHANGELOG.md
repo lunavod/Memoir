@@ -1,5 +1,17 @@
 # Changelog
 
+## 0.1.5
+
+### Added
+- Encoder fallback chain: automatically selects `hevc_nvenc` → `hevc_amf` →
+  `libx265` based on available hardware. Recording no longer requires an
+  NVIDIA GPU.
+- `encoder` parameter on `start_recording()` to force a specific FFmpeg
+  encoder (e.g. `encoder="libx265"` for software encoding).
+- `libx265` software encoder bundled via vcpkg/FFmpeg for machines without
+  hardware encoding support.
+- Test for recording with `libx265` (`test_record_5s_libx265`).
+
 ## 0.1.4
 
 ### Fixed

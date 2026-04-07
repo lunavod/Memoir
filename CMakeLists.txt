@@ -41,7 +41,8 @@ endif()
 install(TARGETS _native LIBRARY DESTINATION memoir_capture)
 
 file(GLOB _FFMPEG_DLLS "${VCPKG_INSTALLED_DIR}/${VCPKG_TARGET_TRIPLET}/bin/av*.dll"
-                       "${VCPKG_INSTALLED_DIR}/${VCPKG_TARGET_TRIPLET}/bin/sw*.dll")
+                       "${VCPKG_INSTALLED_DIR}/${VCPKG_TARGET_TRIPLET}/bin/sw*.dll"
+                       "${VCPKG_INSTALLED_DIR}/${VCPKG_TARGET_TRIPLET}/bin/libx265.dll")
 install(FILES ${_FFMPEG_DLLS} DESTINATION memoir_capture)
 
 # Post-build: also copy to source tree for local dev (import memoir_capture works)

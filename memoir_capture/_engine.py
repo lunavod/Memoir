@@ -129,6 +129,7 @@ class CaptureEngine:
         path: str | os.PathLike | None = None,
         video_name: str | None = None,
         meta_name: str | None = None,
+        encoder: str | None = None,
     ) -> RecordingInfo:
         """Start recording accepted frames.
 
@@ -146,8 +147,14 @@ class CaptureEngine:
         ``.meta``, the extension is stripped so you don't get
         ``data.mp4.mp4``.
 
+        *encoder* forces a specific FFmpeg encoder name (e.g.
+        ``"hevc_nvenc"``, ``"hevc_amf"``, ``"hevc_mf"``, ``"libx265"``).
+        When *None* (the default), the best available encoder is selected
+        automatically.
+
         Raises RuntimeError if already recording.
         """
+        enc = encoder or ""
         if path is not None:
             if base_path is not None:
                 raise TypeError(
@@ -167,7 +174,8 @@ class CaptureEngine:
             p = str(path)
             video_path = os.path.join(p, video_name + ".mp4")
             meta_path = os.path.join(p, meta_name + ".meta")
-            d = self._engine.start_recording_split(p, video_path, meta_path)
+            d = self._engine.start_recording_split(
+                p, video_path, meta_path, encoder=enc)
         else:
             if base_path is None:
                 raise TypeError(
@@ -179,7 +187,7 @@ class CaptureEngine:
                     "video_name= and meta_name= require path= "
                     "instead of positional base_path"
                 )
-            d = self._engine.start_recording(str(base_path))
+            d = self._engine.start_recording(str(base_path), encoder=enc)
         return RecordingInfo(**d)
 
     def stop_recording(self) -> None:

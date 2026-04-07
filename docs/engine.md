@@ -242,6 +242,7 @@ Metadata fields (frame_id, width, height, keyboard_mask) remain accessible even 
 info = engine.start_recording("recordings/session_001")
 # info.video_path = "recordings/session_001.mp4"
 # info.meta_path  = "recordings/session_001.meta"
+# info.codec      = "hevc_nvenc" (or whichever encoder was selected)
 
 # ... frames are captured and recorded simultaneously ...
 
@@ -261,6 +262,15 @@ info = engine.start_recording(
 # info.meta_path  = "recordings/2026-03-18_14-30/keys.meta"
 ```
 
+To force a specific encoder (e.g. for machines without a supported GPU):
+
+```python
+info = engine.start_recording("session_001", encoder="libx265")
+```
+
+Valid encoder names: `"hevc_nvenc"`, `"hevc_amf"`, `"libx265"`. Passing
+an unknown or unavailable encoder raises `RuntimeError`.
+
 If the names already include `.mp4` / `.meta` extensions they are
 stripped automatically (so `video_name="data.mp4"` still produces
 `data.mp4`, not `data.mp4.mp4`).
@@ -269,9 +279,25 @@ Recording can be started and stopped while capture continues. Only accepted fram
 
 ### Recording quality
 
-Default encoding: **lossless HEVC** (QP=0, YUV 4:4:4, full color range, NVENC hardware).
+Default encoding: **lossless HEVC** (QP=0, YUV 4:4:4, full color range).
 
-The recording path: captured BGRA → swscale (resize + BGRA→YUV444) → hevc_nvenc (GPU encode) → MP4 mux.
+The encoder is selected automatically in priority order:
+
+1. **`hevc_nvenc`** — NVIDIA hardware (fastest, requires NVIDIA GPU with NVENC)
+2. **`hevc_amf`** — AMD hardware (requires AMD GPU with AMF support)
+3. **`libx265`** — software fallback (works on any machine, CPU-intensive)
+
+You can force a specific encoder with the `encoder` parameter:
+
+```python
+info = engine.start_recording("session_001", encoder="libx265")
+print(info.codec)  # "libx265"
+```
+
+The `info.codec` field reports which encoder was actually used, which is
+useful when relying on auto-selection.
+
+The recording path: captured BGRA → swscale (resize + BGRA→YUV444) → HEVC encoder → MP4 mux.
 
 ### Multiple sessions
 
