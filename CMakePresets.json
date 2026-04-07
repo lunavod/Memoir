@@ -14,12 +14,26 @@
         "VCPKG_OVERLAY_TRIPLETS": "${sourceDir}/cmake/triplets",
         "VCPKG_TARGET_TRIPLET": "x64-windows-release"
       }
+    },
+    {
+      "name": "node",
+      "displayName": "Node.js N-API (vcpkg)",
+      "inherits": "default",
+      "cacheVariables": {
+        "MEMOIR_BUILD_PYTHON": "OFF",
+        "MEMOIR_BUILD_NODE": "ON"
+      }
     }
   ],
   "buildPresets": [
     {
       "name": "release",
       "configurePreset": "default",
+      "configuration": "Release"
+    },
+    {
+      "name": "node-release",
+      "configurePreset": "node",
       "configuration": "Release"
     }
   ]

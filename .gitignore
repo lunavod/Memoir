@@ -3,6 +3,11 @@ build/
 out/
 cmake-build-*/
 
+# Node
+node_modules/
+dist/
+package-lock.json
+
 # Python
 *.pyd
 *.pdb

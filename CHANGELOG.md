@@ -1,5 +1,28 @@
 # Changelog
 
+## 0.2.0
+
+### Added
+- **Node.js N-API bindings** — new `memoir-node` npm package with synchronous
+  blocking API designed for Worker thread tick loops.
+- `CaptureEngine` class for Node.js with `getNextFrame()`, `startRecording()`,
+  `stopRecording()`, `stats()`, `lastError()`, and split-path recording.
+- `FramePacket` with zero-copy Buffer access, BigInt for 64-bit fields.
+- Pure TypeScript `.meta` reader/writer (`readMeta`, `writeMeta`) with helpers
+  (`isPressed`, `pressedKeys`, `synthesizeKeyEvents`).
+- `TestWindow` native helper for integration tests (Win32 window creation).
+- Full Node.js test suite (37 tests) with parity to Python tests, including
+  color cycle end-to-end verification.
+- `README-node.md` with Node.js API documentation, auto-swapped at publish.
+- CI job for building, testing, and publishing Node.js package to npm via
+  trusted publishing (OIDC).
+
+### Changed
+- Refactored `CMakeLists.txt` to compile C++ core as a static library
+  (`memoir_core`) shared between Python and Node targets.
+- Added `MEMOIR_BUILD_PYTHON` and `MEMOIR_BUILD_NODE` CMake options.
+- Added `node` CMake preset to `CMakePresets.json`.
+
 ## 0.1.5
 
 ### Added

@@ -1,0 +1,42 @@
+{
+  "name": "memoir-node",
+  "version": "0.2.0",
+  "description": "Windows-native screen capture with Node.js bindings",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/lunavod/memoir-capture.git"
+  },
+  "os": ["win32"],
+  "cpu": ["x64"],
+  "engines": {
+    "node": ">=18"
+  },
+  "keywords": ["screen-capture", "windows", "native", "napi", "wgc", "ffmpeg", "recording"],
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "scripts": {
+    "build:native": "cmake-js build --CDMEMOIR_BUILD_NODE=ON --CDMEMOIR_BUILD_PYTHON=OFF --CDCMAKE_TOOLCHAIN_FILE=vcpkg/scripts/buildsystems/vcpkg.cmake --CDVCPKG_OVERLAY_TRIPLETS=cmake/triplets --CDVCPKG_TARGET_TRIPLET=x64-windows-release",
+    "build:ts": "tsc",
+    "build": "npm run build:native && tsc",
+    "rebuild": "cmake-js rebuild --CDMEMOIR_BUILD_NODE=ON --CDMEMOIR_BUILD_PYTHON=OFF --CDCMAKE_TOOLCHAIN_FILE=vcpkg/scripts/buildsystems/vcpkg.cmake --CDVCPKG_OVERLAY_TRIPLETS=cmake/triplets --CDVCPKG_TARGET_TRIPLET=x64-windows-release",
+    "test": "vitest run",
+    "prepublishOnly": "node -e \"const fs=require('fs'); fs.copyFileSync('README.md','README-python.md'); fs.copyFileSync('README-node.md','README.md')\"",
+    "postpublish": "node -e \"const fs=require('fs'); fs.copyFileSync('README-python.md','README.md'); fs.unlinkSync('README-python.md')\""
+  },
+  "dependencies": {},
+  "devDependencies": {
+    "@types/node": "^22.0.0",
+    "cmake-js": "^7.0.0",
+    "node-addon-api": "^7.0.0",
+    "typescript": "^5.5.0",
+    "vitest": "^3.0.0"
+  },
+  "files": [
+    "dist/*.js",
+    "dist/*.d.ts",
+    "build/Release/memoir_node.node",
+    "build/Release/*.dll",
+    "LICENSE"
+  ]
+}

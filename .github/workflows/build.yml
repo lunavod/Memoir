@@ -101,6 +101,81 @@ jobs:
           name: wheel-${{ matrix.python-version }}
           path: dist/*.whl
 
+  # ── Build & test Node.js bindings ─────────────────────────────────
+  build-node:
+    runs-on: windows-latest
+
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          fetch-depth: 0
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - uses: actions/setup-python@v6
+        with:
+          python-version: '3.12'
+
+      # --- vcpkg (cached via Cloudflare R2) ---
+      - name: Restore vcpkg binary cache from R2
+        env:
+          AWS_ACCESS_KEY_ID: ${{ secrets.R2_ACCESS_KEY_ID }}
+          AWS_SECRET_ACCESS_KEY: ${{ secrets.R2_SECRET_ACCESS_KEY }}
+          AWS_DEFAULT_REGION: auto
+        run: |
+          $endpoint = "https://${{ secrets.R2_ACCOUNT_ID }}.r2.cloudflarestorage.com"
+          $key = "vcpkg-cache-${{ runner.os }}.tar"
+          $localArchive = "$env:RUNNER_TEMP\vcpkg-cache.tar"
+          $cacheDir = "$env:LOCALAPPDATA\vcpkg\archives"
+
+          aws s3 cp "s3://github-actions-cache/$key" $localArchive --endpoint-url $endpoint 2>$null
+          if ($LASTEXITCODE -eq 0) {
+            New-Item -ItemType Directory -Force -Path $cacheDir | Out-Null
+            tar -xf $localArchive -C $cacheDir
+            Write-Host "Restored vcpkg cache from R2"
+          } else {
+            Write-Host "No existing cache in R2 — will build from scratch"
+          }
+
+      - name: Bootstrap vcpkg
+        env:
+          VCPKG_COMMIT: d90a9b159c08169f39adcd1b0f1ac0ca12c4b96c
+        run: |
+          git init vcpkg
+          cd vcpkg
+          git remote add origin https://github.com/microsoft/vcpkg.git
+          git fetch --depth 1 origin $env:VCPKG_COMMIT
+          git checkout FETCH_HEAD
+          cd ..
+          .\vcpkg\bootstrap-vcpkg.bat -disableMetrics
+
+      # --- Build ---
+      - name: Install dependencies
+        run: npm install
+
+      - name: Build TypeScript + native addon
+        run: npm run build
+
+      # --- Test (meta only, no display needed) ---
+      - name: Run meta tests (headless)
+        run: npx vitest run tests/node/meta.test.ts
+
+      # --- Upload artifacts ---
+      - name: Upload Node.js package artifacts
+        uses: actions/upload-artifact@v6
+        with:
+          name: memoir-node-package
+          path: |
+            build/Release/memoir_node.node
+            build/Release/*.dll
+            dist/*.js
+            dist/*.d.ts
+            package.json
+            LICENSE
+            README-node.md
+
   # ── Create GitHub Release with changelog (tags only) ──────────────
   release:
     if: startsWith(github.ref, 'refs/tags/')
@@ -160,3 +235,35 @@ jobs:
 
       - name: Publish to PyPI
         uses: pypa/gh-action-pypi-publish@release/v1
+
+  # ── Publish to npm via trusted publishing (tags only) ────────────
+  publish-node:
+    if: startsWith(github.ref, 'refs/tags/')
+    needs: build-node
+    runs-on: ubuntu-latest
+    environment: npm
+    permissions:
+      id-token: write
+
+    steps:
+      - name: Download Node.js package artifacts
+        uses: actions/download-artifact@v7
+        with:
+          name: memoir-node-package
+          path: pkg
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          registry-url: 'https://registry.npmjs.org'
+
+      - name: Prepare package for publish
+        run: |
+          cd pkg
+          # Swap README for npm
+          cp README-node.md README.md
+          rm README-node.md
+
+      - name: Publish to npm
+        run: npm publish --access public --provenance
+        working-directory: pkg
