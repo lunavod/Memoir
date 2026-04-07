@@ -20,9 +20,7 @@
     "build:ts": "tsc",
     "build": "npm run build:native && tsc",
     "rebuild": "cmake-js rebuild --CDMEMOIR_BUILD_NODE=ON --CDMEMOIR_BUILD_PYTHON=OFF --CDCMAKE_TOOLCHAIN_FILE=vcpkg/scripts/buildsystems/vcpkg.cmake --CDVCPKG_OVERLAY_TRIPLETS=cmake/triplets --CDVCPKG_TARGET_TRIPLET=x64-windows-release",
-    "test": "vitest run",
-    "prepublishOnly": "node -e \"const fs=require('fs'); fs.copyFileSync('README.md','README-python.md'); fs.copyFileSync('README-node.md','README.md')\"",
-    "postpublish": "node -e \"const fs=require('fs'); fs.copyFileSync('README-python.md','README.md'); fs.unlinkSync('README-python.md')\""
+    "test": "vitest run"
   },
   "dependencies": {},
   "devDependencies": {
