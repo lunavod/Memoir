@@ -257,6 +257,9 @@ jobs:
           node-version: '20'
           registry-url: 'https://registry.npmjs.org'
 
+      - name: Upgrade npm for trusted publishing support
+        run: npm install -g npm@latest
+
       - name: Prepare package for publish
         run: |
           cd pkg
