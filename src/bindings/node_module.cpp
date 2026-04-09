@@ -91,17 +91,12 @@ public:
             return info.Env().Undefined();
         }
 
-        // Zero-copy: Buffer points at pixel_data's storage.
-        // shared_ptr copy prevents C++ memory from being freed while Buffer exists.
-        auto ref = new std::shared_ptr<FramePacket>(pkt_);
-        return Napi::Buffer<uint8_t>::New(
+        // Copy pixel data into a JS-owned buffer.
+        // (Electron forbids external buffers backed by native memory.)
+        return Napi::Buffer<uint8_t>::Copy(
             info.Env(),
             pkt_->pixel_data.data(),
-            pkt_->pixel_data.size(),
-            [](Napi::Env, uint8_t*, std::shared_ptr<FramePacket>* ref) {
-                delete ref;
-            },
-            ref
+            pkt_->pixel_data.size()
         );
     }
 

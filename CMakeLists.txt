@@ -84,7 +84,7 @@ if(MEMOIR_BUILD_NODE)
         OUTPUT_STRIP_TRAILING_WHITESPACE
     )
 
-    add_library(memoir_node SHARED src/bindings/node_module.cpp)
+    add_library(memoir_node SHARED ${CMAKE_JS_SRC} src/bindings/node_module.cpp)
 
     set_target_properties(memoir_node PROPERTIES PREFIX "" SUFFIX ".node")
 
